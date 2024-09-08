@@ -1,33 +1,34 @@
 package com.example.schoolroutineapp;
 
-import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int ADD_ACTIVITY_REQUEST_CODE = 1;
     private TextView selectedDayText;
-    private Button selectDateButton;
-    private Button addActivityButton;
-    private Calendar selectedDate;
+    private Button selectDateButton, addActivityButton;
+    private RecyclerView recyclerViewActivities;
     private ActivityAdapter activityAdapter;
-
-    // Хранение списка занятий для каждой даты
-    private HashMap<String, List<ActivityItem>> activityMap = new HashMap<>();
+    private List<ActivityItem> activityList;
+    private SharedPreferences sharedPreferences;
+    private Calendar selectedDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,74 +38,108 @@ public class MainActivity extends AppCompatActivity {
         selectedDayText = findViewById(R.id.selectedDayText);
         selectDateButton = findViewById(R.id.selectDateButton);
         addActivityButton = findViewById(R.id.addActivityButton);
+        recyclerViewActivities = findViewById(R.id.recyclerViewActivities);
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerViewActivities);
-        activityAdapter = new ActivityAdapter(new ArrayList<>());
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(activityAdapter);
+        sharedPreferences = getSharedPreferences("activities", Context.MODE_PRIVATE);
+        activityList = new ArrayList<>();
 
-        selectDateButton.setOnClickListener(v -> {
-            final Calendar calendar = Calendar.getInstance();
-            int year = calendar.get(Calendar.YEAR);
-            int month = calendar.get(Calendar.MONTH);
-            int day = calendar.get(Calendar.DAY_OF_MONTH);
+        recyclerViewActivities.setLayoutManager(new LinearLayoutManager(this));
+        activityAdapter = new ActivityAdapter(activityList, this::saveActivities);
+        recyclerViewActivities.setAdapter(activityAdapter);
 
-            DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this,
-                    (view, year1, month1, dayOfMonth) -> {
-                        selectedDate = Calendar.getInstance();
-                        selectedDate.set(year1, month1, dayOfMonth);
-                        String selectedDateString = dayOfMonth + "/" + (month1 + 1) + "/" + year1;
-                        selectedDayText.setText("Selected Date: " + selectedDateString);
+        selectedDate = Calendar.getInstance(); // Выбирается текущая дата по умолчанию
+        updateSelectedDateText();
 
-                        // Обновляем список занятий для выбранной даты
-                        updateActivityListForSelectedDate(selectedDateString);
+        loadActivities(); // Загружаем занятия из SharedPreferences
 
-                    }, year, month, day);
-            datePickerDialog.show();
-        });
+        selectDateButton.setOnClickListener(v -> showDatePickerDialog());
 
         addActivityButton.setOnClickListener(v -> {
-            if (selectedDate == null) {
-                Toast.makeText(MainActivity.this, "Выберите дату", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
             Intent intent = new Intent(MainActivity.this, AddActivityActivity.class);
-            intent.putExtra("selectedDate", selectedDate.getTimeInMillis()); // Передаем дату в миллисекундах
-            startActivityForResult(intent, 1);
+            intent.putExtra("selectedDate", selectedDate.getTimeInMillis());
+            startActivityForResult(intent, ADD_ACTIVITY_REQUEST_CODE);
         });
+    }
+
+    private void showDatePickerDialog() {
+        DatePickerFragment datePickerFragment = new DatePickerFragment((view, year, month, dayOfMonth) -> {
+            // Обновляем дату
+            selectedDate.set(year, month, dayOfMonth);
+
+            // Обновляем текст выбранной даты на экране
+            updateSelectedDateText();
+
+            // Логируем новую выбранную дату
+            System.out.println("Выбранная дата: " + selectedDate.getTime().toString());
+
+            // Очищаем старый список и загружаем активности для новой даты
+            loadActivities();
+        });
+        datePickerFragment.show(getSupportFragmentManager(), "datePicker");
+    }
+
+
+
+    private void updateSelectedDateText() {
+        selectedDayText.setText("Выбранная дата: " + android.text.format.DateFormat.format("dd.MM.yyyy", selectedDate));
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
+        if (requestCode == ADD_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
             String title = data.getStringExtra("title");
             String startTime = data.getStringExtra("startTime");
             String endTime = data.getStringExtra("endTime");
-
             long dateMillis = data.getLongExtra("selectedDate", -1);
-            Calendar date = Calendar.getInstance();
-            date.setTimeInMillis(dateMillis);
-            String selectedDateString = date.get(Calendar.DAY_OF_MONTH) + "/" +
-                    (date.get(Calendar.MONTH) + 1) + "/" +
-                    date.get(Calendar.YEAR);
 
-            // Добавляем новое занятие для конкретной даты
-            ActivityItem activityItem = new ActivityItem(title, startTime, endTime, date);
-            if (!activityMap.containsKey(selectedDateString)) {
-                activityMap.put(selectedDateString, new ArrayList<>());
+            if (dateMillis == selectedDate.getTimeInMillis()) {
+                activityList.add(new ActivityItem(title, startTime, endTime, selectedDate));
+                activityAdapter.notifyDataSetChanged();
+                saveActivities();
             }
-            activityMap.get(selectedDateString).add(activityItem);
-
-            // Обновляем отображаемый список
-            updateActivityListForSelectedDate(selectedDateString);
         }
     }
 
-    private void updateActivityListForSelectedDate(String selectedDateString) {
-        // Получаем занятия для выбранной даты
-        List<ActivityItem> activityItemsForDate = activityMap.getOrDefault(selectedDateString, new ArrayList<>());
-        activityAdapter.updateActivityList(activityItemsForDate);
+    private void saveActivities() {
+        Gson gson = new Gson();
+        String json = gson.toJson(activityList);
+
+        // Сохраняем данные по ключу, уникальному для выбранной даты
+        sharedPreferences.edit().putString(getDateKey(), json).apply();
+
+        // Логируем процесс сохранения
+        System.out.println("Сохраняю данные по ключу: " + getDateKey());
     }
+
+
+
+    private void loadActivities() {
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString(getDateKey(), null);
+
+        // Логируем ключ, чтобы убедиться, что загружаются данные для правильной даты
+        System.out.println("Загружаю данные по ключу: " + getDateKey());
+
+        Type type = new TypeToken<List<ActivityItem>>() {}.getType();
+        List<ActivityItem> savedActivities = gson.fromJson(json, type);
+
+        // Очищаем список занятий перед загрузкой новых
+        activityList.clear();
+
+        if (savedActivities != null) {
+            activityList.addAll(savedActivities);
+        }
+        // Сообщаем адаптеру об изменениях
+        activityAdapter.notifyDataSetChanged();
+    }
+
+    private String getDateKey() {
+        // Форматируем дату в строку формата ddMMyyyy (день, месяц, год)
+        String key = android.text.format.DateFormat.format("ddMMyyyy", selectedDate).toString();
+        // Логируем ключ, чтобы убедиться, что он меняется для каждой даты
+        System.out.println("Текущий ключ для даты: " + key);
+        return key;
+    }
+
 }

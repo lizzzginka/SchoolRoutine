@@ -21,4 +21,10 @@
         android:layout_height="wrap_content"
         android:text="Время"
         android:textSize="16sp"/>
+
+    <CheckBox
+        android:id="@+id/checkBoxCompleted"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="" />
 </LinearLayout>

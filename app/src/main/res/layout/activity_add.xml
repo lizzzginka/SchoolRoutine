@@ -1,25 +1,26 @@
-<!-- activity_add_activity.xml -->
+<!-- activity_add.xml -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp">
 
     <EditText
-        android:id="@+id/editTextActivityTitle"
+        android:id="@+id/editTextTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Название занятия"/>
+        android:hint="Введите название занятия"
+        android:inputType="text"/>
 
     <Button
-        android:id="@+id/buttonStartTime"
+        android:id="@+id/buttonSelectStartTime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Выбрать время начала"/>
 
     <Button
-        android:id="@+id/buttonEndTime"
+        android:id="@+id/buttonSelectEndTime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Выбрать время окончания"/>

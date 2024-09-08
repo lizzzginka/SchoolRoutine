@@ -4,7 +4,6 @@ package com.example.schoolroutineapp;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TimePicker;
@@ -14,67 +13,66 @@ import java.util.Calendar;
 
 public class AddActivityActivity extends AppCompatActivity {
 
-    private EditText activityTitleEditText;
-    private Button startTimeButton, endTimeButton, saveButton;
-    private int startHour, startMinute, endHour, endMinute;
+    private EditText editTextTitle;
+    private Button buttonSelectStartTime;
+    private Button buttonSelectEndTime;
+    private Button buttonSaveActivity;
+    private String startTime = "";
+    private String endTime = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add);
 
-        activityTitleEditText = findViewById(R.id.editTextActivityTitle);
-        startTimeButton = findViewById(R.id.buttonStartTime);
-        endTimeButton = findViewById(R.id.buttonEndTime);
-        saveButton = findViewById(R.id.buttonSaveActivity);
+        editTextTitle = findViewById(R.id.editTextTitle);
+        buttonSelectStartTime = findViewById(R.id.buttonSelectStartTime);
+        buttonSelectEndTime = findViewById(R.id.buttonSelectEndTime);
+        buttonSaveActivity = findViewById(R.id.buttonSaveActivity);
 
-        // Получаем дату из Intent
-        long selectedDateMillis = getIntent().getLongExtra("selectedDate", -1);
-        Calendar selectedDate = Calendar.getInstance();
-        selectedDate.setTimeInMillis(selectedDateMillis);
+        buttonSelectStartTime.setOnClickListener(v -> showTimePickerDialog(true));
+        buttonSelectEndTime.setOnClickListener(v -> showTimePickerDialog(false));
 
-        startTimeButton.setOnClickListener(v -> showTimePicker(true));
-        endTimeButton.setOnClickListener(v -> showTimePicker(false));
+        buttonSaveActivity.setOnClickListener(v -> {
+            String title = editTextTitle.getText().toString().trim();
 
-        saveButton.setOnClickListener(v -> saveActivity(selectedDate));
+            if (title.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
+                Toast.makeText(AddActivityActivity.this, "Заполните все поля", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            long selectedDateMillis = getIntent().getLongExtra("selectedDate", -1);
+            if (selectedDateMillis == -1) {
+                Toast.makeText(AddActivityActivity.this, "Дата не выбрана", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("title", title);
+            resultIntent.putExtra("startTime", startTime);
+            resultIntent.putExtra("endTime", endTime);
+            resultIntent.putExtra("selectedDate", selectedDateMillis);
+            setResult(RESULT_OK, resultIntent);
+            finish();
+        });
     }
 
-    private void showTimePicker(final boolean isStartTime) {
+    private void showTimePickerDialog(boolean isStartTime) {
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
 
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this, new TimePickerDialog.OnTimeSetListener() {
-            @Override
-            public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                if (isStartTime) {
-                    startHour = hourOfDay;
-                    startMinute = minute;
-                    startTimeButton.setText(String.format("%02d:%02d", startHour, startMinute));
-                } else {
-                    endHour = hourOfDay;
-                    endMinute = minute;
-                    endTimeButton.setText(String.format("%02d:%02d", endHour, endMinute));
-                }
-            }
-        }, hour, minute, true);
-
+        TimePickerDialog timePickerDialog = new TimePickerDialog(AddActivityActivity.this,
+                (TimePicker view, int hourOfDay, int minuteOfHour) -> {
+                    String time = String.format("%02d:%02d", hourOfDay, minuteOfHour);
+                    if (isStartTime) {
+                        startTime = time;
+                        buttonSelectStartTime.setText("Начало: " + time);
+                    } else {
+                        endTime = time;
+                        buttonSelectEndTime.setText("Конец: " + time);
+                    }
+                }, hour, minute, true);
         timePickerDialog.show();
-    }
-
-    private void saveActivity(Calendar selectedDate) {
-        String title = activityTitleEditText.getText().toString().trim();
-        if (title.isEmpty()) {
-            Toast.makeText(this, "Введите название занятия", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("title", title);
-        resultIntent.putExtra("startTime", String.format("%02d:%02d", startHour, startMinute));
-        resultIntent.putExtra("endTime", String.format("%02d:%02d", endHour, endMinute));
-        resultIntent.putExtra("selectedDate", selectedDate.getTimeInMillis()); // Передаем актуальную дату обратно
-        setResult(RESULT_OK, resultIntent);
-        finish();
     }
 }

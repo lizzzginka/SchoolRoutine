@@ -3,13 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@color/material_dynamic_neutral90">
 
     <TextView
         android:id="@+id/selectedDayText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Selected Date: "
+        android:text="Выбранная дата: "
         android:textSize="18sp"
         android:layout_marginBottom="16dp" />
 
@@ -17,7 +18,7 @@
         android:id="@+id/selectDateButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Date"
+        android:text="Выбрать дату"
         android:layout_marginBottom="16dp"
         android:layout_gravity="center_horizontal" />
 
@@ -25,7 +26,7 @@
         android:id="@+id/addActivityButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add Activity"
+        android:text="Добавить занятие"
         android:layout_gravity="center_horizontal" />
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewActivities"

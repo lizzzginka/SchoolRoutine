@@ -1,0 +1,32 @@
+<!-- activity_add_activity.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editTextActivityTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Название занятия"/>
+
+    <Button
+        android:id="@+id/buttonStartTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Выбрать время начала"/>
+
+    <Button
+        android:id="@+id/buttonEndTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Выбрать время окончания"/>
+
+    <Button
+        android:id="@+id/buttonSaveActivity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Сохранить занятие"/>
+</LinearLayout>

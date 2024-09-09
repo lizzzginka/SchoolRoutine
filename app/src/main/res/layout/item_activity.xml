@@ -13,6 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Название занятия"
+        android:textColor="@color/material_dynamic_neutral91"
         android:textSize="18sp"
         android:textStyle="bold"/>
 
@@ -20,6 +21,7 @@
         android:id="@+id/textViewTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="@color/material_dynamic_neutral91"
         android:text="Время"
         android:textSize="16sp"/>
 

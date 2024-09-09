@@ -10,6 +10,7 @@
         android:id="@+id/selectedDayText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="@color/material_dynamic_neutral91"
         android:text="Выбранная дата: "
         android:textSize="18sp"
         android:layout_marginBottom="16dp" />
